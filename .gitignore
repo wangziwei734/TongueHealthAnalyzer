@@ -1,0 +1,71 @@
+# Python相关文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虚拟环境
+venv/
+env/
+ENV/
+.env
+.venv
+env.bak/
+venv.bak/
+
+# 数据集和大型文件
+*.h5
+*.hdf5
+*.pkl
+*.model
+tongue_data/test_img/*
+tongue_data/test_label/*
+tongue_data/train_img/*
+tongue_data/train_label/*
+
+# 输出结果目录
+prediction/*
+compare/*
+
+# 权重文件（根据需要可以取消注释）
+# weights/*
+
+# 日志和临时文件
+logs/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter相关
+.ipynb_checkpoints
+*.ipynb
+
+# 缓存文件
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 其他系统文件
+Thumbs.db
+desktop.ini
