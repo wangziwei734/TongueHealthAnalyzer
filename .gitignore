@@ -43,6 +43,7 @@ tongue_data/train_label/*
 # 输出结果目录
 prediction/*
 compare/*
+features/
 
 # 权重文件（根据需要可以取消注释）
 # weights/*

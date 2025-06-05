@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TongueScanPro - 智能中医舌诊系统</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+    <link rel="icon" href="logo.png" type="image/png">
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --success-color: #34C759;
+            --danger-color: #FF3B30;
+            --warning-color: #FF9500;
+            --text-color: #1C1C1E;
+            --text-secondary: #8E8E93;
+            --background-color: #F2F2F7;
+            --card-color: #FFFFFF;
+            --border-radius: 12px;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 24px auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            position: relative;
+            min-height: 500px;
+            transition: var(--transition);
+        }
+        
+        .left-panel {
+            flex: 1;
+            max-width: 500px;
+            transition: var(--transition);
+            margin: 0 auto;
+        }
+        
+        .left-panel.centered {
+            margin: 0 auto;
+        }
+        
+        .left-panel.left-aligned {
+            margin: 0;
+        }
+        
+        .right-panel {
+            flex: 1;
+            opacity: 0;
+            transform: translateX(30px);
+            transition: var(--transition);
+            visibility: hidden;
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: calc(50% - 12px);
+            height: 100%;
+        }
+        
+        .right-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+            visibility: visible;
+            position: relative;
+        }
+        
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 24px;
+            transition: var(--transition);
+            height: 100%;
+        }
+        
+        .card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 32px;
+            border-radius: var(--border-radius);
+        }
+        
+        .preview-container {
+            width: 100%;
+            max-width: 320px;
+            height: 320px;
+            margin: 24px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #preview {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: var(--border-radius);
+        }
+        
+        #placeholder {
+            color: var(--text-secondary);
+            font-size: 15px;
+            text-align: center;
+            padding: 0 16px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 120px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0062CC;
+        }
+        
+        .btn-secondary {
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #E5E5EA;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #30B14F;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 24px 0;
+        }
+        
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(0, 122, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .result-section {
+            padding: 24px;
+            height: 100%;
+        }
+        
+        .result-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-color);
+            padding-bottom: 8px;
+            border-bottom: 1px solid #E5E5EA;
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .result-item {
+            padding: 16px;
+            background-color: var(--background-color);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result-item .label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .result-item .value {
+            font-size: 22px;
+            font-weight: 500;
+        }
+        
+        .diagnosis {
+            padding: 16px;
+            margin-top: 16px;
+            background-color: rgba(52, 199, 89, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .diagnosis .label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .diagnosis .value {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideToLeft {
+            from {
+                margin: 0 auto;
+            }
+            to {
+                margin: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                max-width: 100%;
+            }
+            
+            .right-panel {
+                position: relative;
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .preview-container {
+                height: 280px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">智能中医舌诊系统</div>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-panel centered">
+                <div class="card">
+                    <div class="upload-section">
+                        <div class="preview-container">
+                            <img id="preview" src="" alt="舌诊图像预览" style="display: none;">
+                            <p id="placeholder">请选择或拍摄舌诊图像</p>
+                        </div>
+                        
+                        <input type="file" id="fileInput" class="file-input" accept="image/*">
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="selectBtn">选择图像</button>
+                            <button class="btn btn-success" id="uploadBtn" disabled>开始分析</button>
+                        </div>
+                        
+                        <div class="loading" id="loading">
+                            <div class="spinner"></div>
+                            <p>正在分析舌诊图像，请稍候...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="card result-section" id="resultSection">
+                    <div class="result-title">分析结果</div>
+                    <div class="result-grid">
+                        <div class="result-item">
+                            <div class="label">整体健康值</div>
+                            <div class="value" id="healthy">--</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="label">心健康值</div>
+                            <div class="value" id="heart">--</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="label">脾健康值</div>
+                            <div class="value" id="spleen">--</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="label">肾健康值</div>
+                            <div class="value" id="kidney">--</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="label">肺健康值</div>
+                            <div class="value" id="lung">--</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="label">肝健康值</div>
+                            <div class="value" id="liver">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="diagnosis">
+                        <div class="label">体质判断</div>
+                        <div class="value" id="diagnosis">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            &copy; 2025 TongueScanPro.com - 专业的智能中医舌诊系统
+        </div>
+    </div>
+
+    <script>
+        // 配置API地址 - 修改为支持本地hosts文件配置
+        const API_BASE_URL = window.location.hostname === 'www.tonguescanpro.com' || window.location.hostname === 'tonguescanpro.com' 
+            ? 'http://api.tonguescanpro.com' // 当通过域名访问时，使用api子域名
+            : 'http://localhost:5000';        // 本地开发环境API地址
+            
+        // 元素引用
+        const fileInput = document.getElementById('fileInput');
+        const selectBtn = document.getElementById('selectBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const preview = document.getElementById('preview');
+        const placeholder = document.getElementById('placeholder');
+        const loading = document.getElementById('loading');
+        const resultSection = document.getElementById('resultSection');
+        const leftPanel = document.querySelector('.left-panel');
+        const rightPanel = document.querySelector('.right-panel');
+        
+        // 绑定选择文件按钮事件
+        selectBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // 当选择了文件时预览图像
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    uploadBtn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 绑定上传按钮事件
+        uploadBtn.addEventListener('click', async () => {
+            if (!preview.src) return;
+            
+            // 显示加载状态
+            loading.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            try {
+                // 准备请求数据
+                const requestData = {
+                    image: preview.src
+                };
+                
+                // 发送到后端API
+                const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 显示结果
+                    document.getElementById('healthy').textContent = formatValue(result.results.healthy);
+                    document.getElementById('heart').textContent = formatValue(result.results.heart);
+                    document.getElementById('spleen').textContent = formatValue(result.results.spleen);
+                    document.getElementById('kidney').textContent = formatValue(result.results.kidney);
+                    document.getElementById('lung').textContent = formatValue(result.results.lung);
+                    document.getElementById('liver').textContent = formatValue(result.results.liver);
+                    document.getElementById('diagnosis').textContent = result.diagnosis.join(', ');
+                    
+                    // 动画效果：左侧面板向左移动，右侧面板显示
+                    leftPanel.classList.remove('centered');
+                    leftPanel.classList.add('left-aligned');
+                    
+                    // 稍微延迟显示结果，让左移动画先执行
+                    setTimeout(() => {
+                        rightPanel.classList.add('visible');
+                        // 确保在结果显示后才隐藏加载动画
+                        loading.style.display = 'none';
+                    }, 300);
+                    
+                } else {
+                    alert(`分析失败: ${result.message}`);
+                    loading.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('请求错误:', error);
+                alert('分析请求失败，请检查网络连接或服务器状态');
+                loading.style.display = 'none';
+            } finally {
+                // 移除finally块中的loading.style.display = 'none'，让它在结果显示后才隐藏
+                uploadBtn.disabled = false;
+            }
+        });
+        
+        // 格式化数值显示
+        function formatValue(value) {
+            return value.toFixed(4);
+        }
+
+        // 添加拖放功能
+        const previewContainer = document.querySelector('.preview-container');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            previewContainer.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            previewContainer.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            previewContainer.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            previewContainer.style.backgroundColor = '#E1F5FE';
+        }
+        
+        function unhighlight() {
+            previewContainer.style.backgroundColor = 'var(--background-color)';
+        }
+        
+        previewContainer.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length) {
+                fileInput.files = files;
+                const file = files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    placeholder.style.display = 'none';
+                    uploadBtn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+</body>
+</html> 
