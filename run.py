@@ -103,7 +103,7 @@ def run_analysis(image_path, user_id='test_user'):
 
 if __name__ == '__main__':
     # 默认测试图像
-    image_path = 'example/2.jpg'
+    image_path = 'example/5.jpg'
     
     # 使用命令行参数
     import sys

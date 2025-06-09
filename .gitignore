@@ -44,9 +44,10 @@ tongue_data/train_label/*
 prediction/*
 compare/*
 features/
+features/**/*
 
 # 权重文件（根据需要可以取消注释）
-# weights/*
+weights/*
 
 # 日志和临时文件
 logs/
