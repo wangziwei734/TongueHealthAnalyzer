@@ -64,26 +64,28 @@ CORS(app, resources={r"/api/*": {"origins": [
     "*"
 ]}})
 
+
 def rm_img(path):
     """删除文件"""
     if os.path.exists(path):
         os.remove(path)
+
 
 def save_img(file_path, store_path):
     """与run.py中相同的图像保存逻辑"""
     try:
         rm_img(store_path)
         img = cv2.imread(file_path)
-        
+
         # 检查图像是否成功读取
         if img is None:
             print(f"无法读取图像: {file_path}")
             return None, None
-            
+
         img_shape = img.shape
-        rate = max(img.shape[0]//1000, img.shape[1]//500)
+        rate = max(img.shape[0] // 1000, img.shape[1] // 500)
         if rate > 1:
-            img = cv2.resize(img, (img.shape[1]//rate, img.shape[0]//rate))
+            img = cv2.resize(img, (img.shape[1] // rate, img.shape[0] // rate))
             cv2.imwrite(store_path, img)
             return rate, img_shape
         else:
@@ -94,53 +96,55 @@ def save_img(file_path, store_path):
         traceback.print_exc()
         return None, None
 
+
 def save_base64_img(base64_data, final_file_path):
     """保存Base64图像数据并处理"""
     try:
         # 移除Base64前缀(如果有)
         if ',' in base64_data:
             base64_data = base64_data.split(',')[1]
-        
+
         # 解码Base64数据
         try:
             img_data = base64.b64decode(base64_data)
         except Exception as e:
             print(f"Base64解码失败: {e}")
             return False, "Base64解码失败"
-        
+
         # 直接从内存中解码图像
         try:
             nparr = np.frombuffer(img_data, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-            
+
             if img is None:
                 print("图像解码失败，无法从Base64数据创建图像")
                 return False, "图像解码失败"
-            
+
             # 处理图像
             img_shape = img.shape
-            rate = max(img.shape[0]//1000, img.shape[1]//500)
+            rate = max(img.shape[0] // 1000, img.shape[1] // 500)
             if rate > 1:
-                img = cv2.resize(img, (img.shape[1]//rate, img.shape[0]//rate))
-            
+                img = cv2.resize(img, (img.shape[1] // rate, img.shape[0] // rate))
+
             # 保存处理后的图像
             cv2.imwrite(final_file_path, img)
             return True, rate
-            
+
         except Exception as e:
             print(f"图像处理失败: {e}")
             traceback.print_exc()
             return False, f"图像处理失败: {e}"
-            
+
     except Exception as e:
         print(f"图像保存流程失败: {e}")
         traceback.print_exc()
         return False, str(e)
 
+
 def analysis(upl_tongue, user_id):
     """简化的舌诊分析函数，与run.py逻辑类似"""
     print(f"开始分析图像: {upl_tongue}")
-    
+
     try:
         # 确保使用全局会话
         global sess, graph
@@ -153,79 +157,81 @@ def analysis(upl_tongue, user_id):
                 except tf.errors.FailedPreconditionError:
                     print(f"初始化变量: {var.name}")
                     sess.run(tf.compat.v1.variables_initializer([var]))
-            
+
             # 使用同一个会话调用分析函数
             health_value = ChineseMedicine_analysis.analysis_ChineseMedicine(upl_tongue, user_id)
-        
+
         if health_value is None:
             print("分析返回None结果")
             return None
-            
+
         # 结果格式化
         res = {
             'healthy': health_value[0],  # 整体健康值
-            'heart': health_value[1],    # 心健康值
-            'spleen': health_value[2],   # 脾健康值
-            'kidney': health_value[3],   # 肾健康值
-            'lung': health_value[4],     # 肺健康值
-            'liver': health_value[5]     # 肝健康值
+            'heart': health_value[1],  # 心健康值
+            'spleen': health_value[2],  # 脾健康值
+            'kidney': health_value[3],  # 肾健康值
+            'lung': health_value[4],  # 肺健康值
+            'liver': health_value[5]  # 肝健康值
         }
-        
+
         print("中医分析成功")
         return res
-            
+
     except Exception as error:
         print(f"中医分析失败: {error}")
         traceback.print_exc()
         return None
+
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """健康检查API"""
     return jsonify({"status": "ok", "message": "服务正常运行"})
 
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze_tongue():
     """舌诊分析API"""
     # 获取请求数据
     data = request.json
-    
+
     if not data or 'image' not in data:
         return jsonify({
             "success": False,
             "message": "请求数据不完整，缺少图像数据"
         }), 400
-    
+
     # 从请求中获取图像数据和用户ID
     base64_img = data['image']
     user_id = data.get('userId', str(uuid.uuid4()))  # 如果没有提供用户ID，则生成一个随机ID
-    
+
     try:
         # 生成临时文件名
         temp_name = f"temp_{str(time.time()).replace('.', '')}_{user_id}.jpg"
         temp_path = os.path.join(upload_folder, temp_name)
-        
+
         # 保存Base64图像
         success, result = save_base64_img(base64_img, temp_path)
-        
+
         if not success:
             return jsonify({
                 "success": False,
                 "message": f"图像保存失败: {result}"
             }), 400
-        
+
         # 分析图像
         health_result = analysis(temp_path, user_id)
-        
+
         # 确保删除临时文件
         rm_img(temp_path)
-        
+
         if health_result is None:
             return jsonify({
                 "success": False,
                 "message": "舌诊分析失败，模型无法处理此图像"
             }), 500
-        
+
         # 使用与run.py相同的阈值判断体质
         diagnosis = []
         if abs(health_result['heart']) > 0.4:
@@ -240,7 +246,7 @@ def analyze_tongue():
             diagnosis.append('肝郁')
         if not diagnosis:
             diagnosis.append('健康')
-        
+
         # 返回结果
         return jsonify({
             "success": True,
@@ -248,7 +254,7 @@ def analyze_tongue():
             "results": health_result,
             "diagnosis": diagnosis
         })
-        
+
     except Exception as e:
         # 确保删除临时文件
         if 'temp_path' in locals():
@@ -259,9 +265,11 @@ def analyze_tongue():
             "message": f"分析过程中出错: {str(e)}"
         }), 500
 
+
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
+
 
 if __name__ == '__main__':
     # 启动服务前确保模型加载
@@ -271,7 +279,7 @@ if __name__ == '__main__':
         print("警告: 模型加载失败")
     else:
         print("模型加载成功")
-    
+
     # 启动服务
     print(f"API服务启动...")
-    app.run(host='0.0.0.0', port=5000, debug=False) 
+    app.run(host='0.0.0.0', port=5000, debug=False)

@@ -20,3 +20,4 @@ scikit-learn>=1.0.0
 
 # 其他工具
 six>=1.15.0 
+flask~=3.0.3
